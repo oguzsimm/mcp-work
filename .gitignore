@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# ignore tests folder
+tests/
+
+# ignore mcp.json file
+mcp.json
