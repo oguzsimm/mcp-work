@@ -1,21 +1,30 @@
 import asyncio
+import os
 from mcp.server.fastmcp import FastMCP
 from transactional_db import CUSTOMERS_TABLE, ORDERS_TABLE, PRODUCTS_TABLE
 
-mcp = FastMCP("ecommerce_tools")
+# 👇 Cloud Run will inject PORT env var; default to 8080 for local
+PORT = int(os.environ.get("PORT", "8080"))
+
+# 👇 IMPORTANT: set host/port on FastMCP, not on .run()
+mcp = FastMCP(
+    "ecommerce_tools",
+    json_response=True,      # responses as JSON (nice for HTTP)
+    host="0.0.0.0",          # required for Cloud Run
+    port=PORT,               # use injected port
+)
 
 @mcp.tool()
 async def get_customer_info(customer_id: str) -> str:
     """Search for a customer using their unique identifier"""
 
     customer_info = CUSTOMERS_TABLE.get(customer_id)
-
     if not customer_info:
         return "Customer not found"
 
     return str(customer_info)
 
-# ...
+# ... your other tools here ...
 
 @mcp.tool()
 async def get_order_details(order_id: str) -> str:
@@ -74,4 +83,7 @@ async def get_orders_by_customer_id(
     }
 
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    # 👇 HTTP-based MCP transport
+    mcp.run(transport="streamable-http")
+    # (You could also use "http" depending on SDK version, but
+    #  docs use "streamable-http" for remote access.)  [oai_citation:1‡modelcontextprotocol.github.io](https://modelcontextprotocol.github.io/python-sdk/)
